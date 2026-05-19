@@ -1,6 +1,7 @@
 # ResQMesh
 
 ## A Delay-Tolerant Emergency Communication System Using Opportunistic Mesh Networking
+https://barcode.tec-it.com/barcode.ashx?data=https%3A%2F%2Fgithub.com%2Fabhishek-mule%2FResQMesh%2Freleases%2Fdownload%2Fv1.0.0%2Fapp-debug.apk&code=MobileQRUrl&multiplebarcodes=true&translate-esc=on&eclevel=L
 
 ### Core Problem
 During disasters, internet fails, cellular towers collapse, and communication dies. Victims become digitally invisible.
