@@ -10,14 +10,9 @@ interface GpsMapProps {
   packets: EmergencyPacket[]
 }
 
-delete (L.Icon.Default.prototype as any)._getIconUrl
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-})
-
 function createColoredIcon(color: string) {
+  if (typeof window === 'undefined') return undefined
+  
   return L.divIcon({
     className: 'custom-marker',
     html: `<div style="
@@ -53,10 +48,32 @@ function MapUpdater({ nodes }: { nodes: Node[] }) {
   return null
 }
 
-export function GpsMap({ nodes, packets }: GpsMapProps) {
+export default function GpsMap({ nodes, packets }: GpsMapProps) {
+  const [mounted, setMounted] = useState(false)
+  
   const center: [number, number] = nodes.length > 0
     ? [nodes[0].latitude, nodes[0].longitude]
     : [18.5204, 73.8567]
+
+  useEffect(() => {
+    setMounted(true)
+    if (typeof window !== 'undefined') {
+      delete (L.Icon.Default.prototype as any)._getIconUrl
+      L.Icon.Default.mergeOptions({
+        iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+        iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+      })
+    }
+  }, [])
+
+  if (!mounted) {
+    return (
+      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1e1e1e', color: '#666' }}>
+        Loading Map...
+      </div>
+    )
+  }
 
   return (
     <div style={{ width: '100%', height: '100%' }}>
@@ -77,24 +94,27 @@ export function GpsMap({ nodes, packets }: GpsMapProps) {
 
         <MapUpdater nodes={nodes} />
 
-        {nodes.map(node => (
-          <Marker
-            key={node.id}
-            position={[node.latitude, node.longitude]}
-            icon={createColoredIcon(nodeColors[node.type])}
-          >
-            <Popup>
-              <div style={{ color: '#333', fontFamily: 'monospace' }}>
-                <strong>{node.name}</strong><br />
-                Type: {node.type.toUpperCase()}<br />
-                Status: {node.status}<br />
-                Battery: {node.battery}%<br />
-                Lat: {node.latitude.toFixed(4)}<br />
-                Lon: {node.longitude.toFixed(4)}
-              </div>
-            </Popup>
-          </Marker>
-        ))}
+        {nodes.map(node => {
+          const icon = createColoredIcon(nodeColors[node.type])
+          return (
+            <Marker
+              key={node.id}
+              position={[node.latitude, node.longitude]}
+              icon={icon}
+            >
+              <Popup>
+                <div style={{ color: '#333', fontFamily: 'monospace' }}>
+                  <strong>{node.name}</strong><br />
+                  Type: {node.type.toUpperCase()}<br />
+                  Status: {node.status}<br />
+                  Battery: {node.battery}%<br />
+                  Lat: {node.latitude.toFixed(4)}<br />
+                  Lon: {node.longitude.toFixed(4)}
+                </div>
+              </Popup>
+            </Marker>
+          )
+        })}
 
         {packets.map(packet => (
           <Circle

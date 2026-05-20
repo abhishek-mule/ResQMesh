@@ -6,6 +6,7 @@ import android.net.NetworkCapabilities
 import android.util.Log
 import com.resqmesh.app.data.local.ResQMeshDatabase
 import com.resqmesh.app.data.local.entity.EmergencyPacket
+import com.resqmesh.app.data.local.entity.NearbyNode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -41,9 +42,48 @@ class CloudSyncService(private val context: Context) {
             while (true) {
                 if (isInternetAvailable()) {
                     syncPendingPackets()
+                    syncNearbyNodes()
                 }
                 delay(SYNC_INTERVAL)
             }
+        }
+    }
+
+    suspend fun syncNearbyNodes() {
+        try {
+            val db = ResQMeshDatabase.getDatabase(context)
+            val nodes = db.nodeDao().getConnectedNodes()
+
+            if (nodes.isEmpty()) {
+                return
+            }
+
+            for (node in nodes) {
+                val json = JSONObject().apply {
+                    put("id", node.deviceId)
+                    put("name", node.deviceName)
+                    put("type", "relay")
+                    put("status", if (node.isConnected) "online" else "offline")
+                    put("battery", 50)
+                    put("latitude", 0.0)
+                    put("longitude", 0.0)
+                    put("lastSeen", node.lastSeen)
+                }
+
+                val requestBody = json.toString().toRequestBody(jsonMediaType)
+                val request = Request.Builder()
+                    .url("$baseUrl/nodes")
+                    .post(requestBody)
+                    .build()
+
+                client.newCall(request).execute().use { response ->
+                    if (response.isSuccessful) {
+                        Log.d(TAG, "Node synced: ${node.deviceName}")
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Node sync error", e)
         }
     }
 

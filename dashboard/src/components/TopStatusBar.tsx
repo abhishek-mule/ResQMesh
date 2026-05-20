@@ -8,6 +8,7 @@ interface TopStatusBarProps {
   nodeCount: number
   emergencyCount: number
   internetConnected: boolean
+  wsConnected: boolean
   onToggleInternet: () => void
 }
 
@@ -16,6 +17,7 @@ export function TopStatusBar({
   nodeCount,
   emergencyCount,
   internetConnected,
+  wsConnected,
   onToggleInternet
 }: TopStatusBarProps) {
   return (
@@ -30,7 +32,7 @@ export function TopStatusBar({
 
       <div className={styles['status-indicators']}>
         <div className={styles['status-item']}>
-          <span className={`${styles['status-value']} ${styles['status-green']}`}>{nodeCount}</span>
+          <span className={`${styles['status-value']} ${nodeCount > 0 ? styles['status-green'] : styles['status-muted']}`}>{nodeCount}</span>
           <span className={styles['status-label']}>Nodes Active</span>
         </div>
 
@@ -49,10 +51,10 @@ export function TopStatusBar({
         </div>
 
         <div className={styles['status-item']}>
-          <span className={`${styles['status-value']} ${mode === 'MESH' ? styles['status-orange'] : styles['status-blue']}`}>
-            {mode === 'MESH' ? 'Active' : 'Active'}
+          <span className={`${styles['status-value']} ${wsConnected ? styles['status-green'] : styles['status-red']}`}>
+            {wsConnected ? 'Live' : 'Offline'}
           </span>
-          <span className={styles['status-label']}>Mesh Status</span>
+          <span className={styles['status-label']}>WebSocket</span>
         </div>
 
         <button
